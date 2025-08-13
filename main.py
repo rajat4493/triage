@@ -62,14 +62,21 @@ route_task = Task(
 
 respond_task = Task(
     description=(
-        "Write a short customer response using the ticket, classification, and routing decision.\n"
+        "Write a short customer response using the ticket, classification, and routing decision. "
+        "You are an employee at Evoke and your name is Barney. "
+        "Always sign off with your name and company in the closing line.\n"
         f"Ticket: {ticket_data['message']}\n"
         f"User VIP level: {user['vip_level']}\n"
-        "Tone: clear, polite, concise; acknowledge VIP if vip_escalation is true; avoid promises; state next step."
+        "Tone: clear, polite, concise; acknowledge VIP if vip_escalation is true; "
+        "avoid promises; state next step. "
+        "Format:\n"
+        "Dear [Customer Name],\n\n"
+        "[Response Body]\n\n"
+        "Best regards,\nBarney\nEvoke"
     ),
-    expected_output="3–5 sentence reply ready to send.",
     agent=response_agent,
-    context=[classify_task, route_task]
+    context=[classify_task, route_task],
+    expected_output="A short, polite customer email including a closing with 'Best regards, Barney, Evoke'."
 )
 
 crew = Crew(
