@@ -1,0 +1,6 @@
+custom_llms:
+  - model_name: ollama/llama2
+    litellm_provider: ollama
+    api_base: http://localhost:11434
+    model_info:
+      mode: completion
