@@ -1,28 +1,33 @@
-# Use slim Python image
-FROM python:3.10-slim
+FROM python:3.11-slim
 
-# System deps
-RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DEFAULT_TIMEOUT=120 PIP_PROGRESS_BAR=off
 
-# Install Ollama
-RUN curl -fsSL https://ollama.ai/install.sh | bash
-ENV OLLAMA_MODELS=/root/.ollama/models
-# (Optional) change model here if you use another one
-ENV OLLAMA_MODEL=llama2
+# system deps
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+ && rm -rf /var/lib/apt/lists/*
 
-# Workdir & copy code
 WORKDIR /app
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
 
-# Copy the rest (app.py, agents.py, litellm.config.yaml, etc.)
-COPY . /app
+# upgrade pip (stabler downloads)
+RUN python -m pip install --upgrade pip
 
-# Pull the model at build time (cached layer)
-RUN ollama serve & sleep 3 && ollama pull $OLLAMA_MODEL && pkill ollama || true
+# 1) Install PyTorch CPU wheels first (required for T5 to run)
+RUN pip install --no-cache-dir --retries 5 --timeout 120 \
+  --index-url https://download.pytorch.org/whl/cpu \
+  torch==2.3.1
 
-# Expose HF port
+# 2) Install the rest (small wheels)
+RUN pip install --no-cache-dir --retries 5 --timeout 120 \
+  transformers==4.43.3 sentencepiece==0.2.0 streamlit==1.36.0 pydantic==2.8.2
+
+# 3) Point HF caches to a writable place (and create it)
+ENV TRANSFORMERS_CACHE=/tmp/hf_cache \
+    HF_HOME=/tmp/hf_cache \
+    HF_HUB_DISABLE_SYMLINKS_WARNING=1 \
+    HF_MODEL=google/flan-t5-small
+#RUN mkdir -p /app/.cache/huggingface
+
 EXPOSE 7860
-
-# Start Ollama + Streamlit
-CMD bash -lc 'ollama serve & sleep 3 && python -m streamlit run app.py --server.address 0.0.0.0 --server.port ${PORT:-7860}'
+CMD ["bash","-lc","streamlit run app.py --server.port ${PORT:-7860} --server.address 0.0.0.0"]

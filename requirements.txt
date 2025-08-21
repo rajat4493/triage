@@ -1,4 +1,0 @@
-streamlit
-crewai>=0.41.0
-litellm
-python-dotenv

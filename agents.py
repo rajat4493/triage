@@ -1,14 +1,14 @@
-# agents.py
-from crewai import Agent, LLM
+import os
+from crewai import LLM
 
-# Point to your local Ollama
+ollama_tag = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
+
 llm = LLM(
-    model="ollama/llama2",                   # or llama3, mistral, etc. (must be pulled in Ollama)
+    model=ollama_tag,                 # e.g. "llama3.2:1b" or "qwen2.5:1.5b-instruct"
     base_url="http://localhost:11434",
-    temperature=0.3,
+    temperature=0.2,
     timeout=60
 )
-
 classifier_agent = Agent(
     role="Ticket Classifier",
     goal="Understand and classify support issues",
